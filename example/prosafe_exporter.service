@@ -1,0 +1,10 @@
+[Unit]
+Description=Prometheus ProSAFE Exporter
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/prosafe_exporter --path.config /etc/prometheus/prosafe.toml
+User=nobody
+
+[Install]
+WantedBy=multi-user.target

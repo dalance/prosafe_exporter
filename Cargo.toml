@@ -1,0 +1,33 @@
+[package]
+name = "prosafe_exporter"
+version = "0.1.0"
+authors = ["dalance <dalance@gmail.com>"]
+repository = "https://github.com/dalance/prosafe_exporter"
+license = "MIT"
+readme = "README.md"
+description = "Prometheus exporter for NETGEAR switches supported by ProSAFE Plus utility"
+categories = ["network-programming", "web-programming"]
+
+[badges]
+travis-ci = { repository = "dalance/prosafe_exporter" }
+
+[dependencies]
+bincode      = "*"
+combine      = "*"
+failure      = "*"
+lazy_static  = "*"
+hyper        = { version = "0.9", default-features = false }
+interfaces   = "*"
+prometheus   = "*"
+rand         = "*"
+serde        = "*"
+serde_derive = "*"
+structopt    = "*"
+toml         = "*"
+
+[package.metadata.release]
+dev-version-ext            = "pre"
+pre-release-commit-message = "Prepare to v{{version}}"
+pro-release-commit-message = "Start next development iteration v{{version}}"
+tag-message                = "Bump version to {{version}}"
+tag-prefix                 = "v"
