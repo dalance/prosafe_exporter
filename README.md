@@ -14,6 +14,12 @@
 | prosafe_error_packets_total  | Transfer error in packets          | switch, port                   |
 | prosafe_build_info           | prosafe_exporter Build information | version, revision, rustversion |
 
+## Tested Switches
+
+- XS708E
+- GS108Ev3
+- GS105Ev2
+
 ## Query Example
 
 Outgoing data rate of `switch1:port1` is below.
