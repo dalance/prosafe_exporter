@@ -8,7 +8,7 @@
 
 | metric                       | description                        | labels                         |
 | ---------------------------- | ---------------------------------- | ------------------------------ |
-| prosafe_up                   | The last query is successful       | switch, port                   |
+| prosafe_up                   | The last query is successful       | switch                         |
 | prosafe_receive_bytes_total  | Incoming transfer in bytes         | switch, port                   |
 | prosafe_transmit_bytes_total | Outgoing transfer in bytes         | switch, port                   |
 | prosafe_error_packets_total  | Transfer error in packets          | switch, port                   |
@@ -48,6 +48,6 @@ The format of `config_file` is below.
 
 ```
 listen_port = 9493                        # listen_port of expoter ( 9493 is the default port of prosafe_exporter )
-if_name     = "eno1"                      # interface name to access switches ( ex. eno1, eth0,,, )
+if_name     = "eno1"                      # network interface name to access switches ( ex. eno1, eth0,,, )
 switches    = ["switch1", "192.168.0.10"] # hostname or address of switches
 ```
