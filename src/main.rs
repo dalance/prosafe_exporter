@@ -19,6 +19,7 @@ mod exporter;
 mod prosafe_switch;
 
 use exporter::{Config, Exporter};
+use failure::{Error, ResultExt};
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
@@ -49,13 +50,25 @@ pub struct Opt {
 // Main
 // -------------------------------------------------------------------------------------------------
 
-fn main() {
+fn run() -> Result<(), Error> {
     let opt = Opt::from_args();
 
-    let mut f = File::open(&opt.config).unwrap();
+    let mut f =
+        File::open(&opt.config).context(format!("failed to open file: {:?}", opt.config))?;
     let mut s = String::new();
     let _ = f.read_to_string(&mut s);
-    let config: Config = toml::from_str(&s).unwrap();
+    let config: Config = toml::from_str(&s)?;
 
     let _ = Exporter::start(config, opt.verbose);
+
+    Ok(())
+}
+
+fn main() {
+    match run() {
+        Err(x) => {
+            println!("{}", x);
+        }
+        _ => (),
+    }
 }
