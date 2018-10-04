@@ -1,0 +1,42 @@
+language: rust
+
+os:
+- linux
+- osx
+
+before_script:
+- if [[ $TRAVIS_OS_NAME == "linux" ]]; then rustup target add x86_64-unknown-linux-musl; fi
+- if [[ $TRAVIS_OS_NAME == "linux" ]]; then rustup target add x86_64-pc-windows-gnu; fi
+- if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get -qq update; fi
+- if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get -qq install gcc-mingw-w64-x86-64 musl-tools libssl-dev; fi
+- ctags --version
+- ctags --help
+
+script:
+- make test
+- if [[ $TRAVIS_OS_NAME == "linux" ]]; then make release_lnx; fi
+- if [[ $TRAVIS_OS_NAME == "linux" ]]; then make release_win; fi
+- if [[ $TRAVIS_OS_NAME == "osx"   ]]; then make release_mac; fi
+
+#after_success: |
+#    if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+#        RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
+#        # Uncomment the following line for coveralls.io
+#        # cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+#
+#        # Uncomment the following two lines create and upload a report for codecov.io
+#        rustup override set beta
+#        cargo tarpaulin --out Xml -- --test-threads=1
+#        bash <(curl -s https://codecov.io/bash)
+#    fi
+
+deploy:
+  provider: releases
+  api_key:
+    secure: bGeT+HwE0lQp1jEGltbA7SchB1JM5I+e6W5r7P+Rc7NvZi9YCssaa+IE264iObIiuwT8WeMV8oRlb4LTLQDpQscelTrx6VaJBZZZ9MBOeyHqm2ziXJeIkFD3+Euql4hdYFxygwAbFHsHKP2sqGZ+ZFLL7xNfRpNE4zP5V/Bq/wltsgBqqHPShdL/XtYycpv6hQFkl4Hjsgmp3rf+00HiWDF7rmRZI1mhxnpI8WrRwRDKD4OLwJJrOqrnnUTihOCC+CukNaUTJQ7tIBuiXV/QCrF3Bcw5x9GQFOUdV6nnFSuVpBsnBUt1l/6qPaOBcWiJHIKHO4lS9LaHyTJlpHTeaoKkEox0LVqIC+k4l2d2T2cfi578b0ew5ZLUJpeAcJ/N42rJuJtzoroRSP47/zvgLZOpkuUd+H5PE4kBBFHG86LDdOYktfdVCKi8O/Jx47XVc3dGPmSWwoV3xL2oqdjV7EbS9T7/xFnFytmTXbB7VhjdjuQQUUP7Nt/J3iyQW979H2Cksix1Rq7uuYxoa5fL1aBRyyQ2pw3LwsAOfgxGvbUae+17CsxZaCp2mhPOyNo6ZuRiT7L7nVSHXVvz3Ae1Mtnuf8UOtqtIyiMZKXhEjkDG3594zy0cAl1L9EtGRRdE/sezkNfSfQEfnBw0E278O+lMXx97mZInGjSarZ52e1g=
+  file: prosafe_exporter*.zip
+  file_glob: true
+  skip_cleanup: true
+  on:
+    repo: dalance/prosafe_exporter
+    tags: true
