@@ -12,18 +12,18 @@ categories = ["network-programming", "web-programming"]
 travis-ci = { repository = "dalance/prosafe_exporter" }
 
 [dependencies]
-bincode      = "*"
-combine      = "*"
-failure      = "*"
-lazy_static  = "*"
+bincode      = "1.0.1"
+combine      = "3.5.2"
+failure      = "0.1.2"
+lazy_static  = "0.2.11"
 hyper        = { version = "0.9", default-features = false }
-interfaces   = "*"
-prometheus   = "*"
-rand         = "*"
-serde        = "*"
-serde_derive = "*"
-structopt    = "*"
-toml         = "*"
+interfaces   = "0.0.4"
+prometheus   = "0.4.2"
+rand         = "0.5.5"
+serde        = "1.0.79"
+serde_derive = "1.0.79"
+structopt    = "0.2.10"
+toml         = "0.4.8"
 
 [package.metadata.release]
 dev-version-ext            = "pre"
