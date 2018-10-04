@@ -6,6 +6,8 @@ use hyper::uri::RequestUri;
 use prometheus;
 use prometheus::{Encoder, GaugeVec, TextEncoder};
 use prosafe_switch::ProSafeSwitch;
+use std::thread;
+use std::time::Duration;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Metrics
@@ -62,6 +64,7 @@ static RUST_VERSION: Option<&'static str> = option_env!("RUST_VERSION");
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    pub scrape_interval: Option<u64>,
     pub listen_port: Option<u32>,
     pub if_name: String,
     pub switches: Vec<String>,
@@ -78,49 +81,54 @@ impl Exporter {
         let encoder = TextEncoder::new();
         let addr = format!("0.0.0.0:{}", config.listen_port.unwrap_or(9493));
 
+        let git_revision = GIT_REVISION.unwrap_or("");
+        let rust_version = RUST_VERSION.unwrap_or("");
+        BUILD_INFO
+            .with_label_values(&[&VERSION, &git_revision, &rust_version])
+            .set(1.0);
+
+        let interval = Duration::new(config.scrape_interval.unwrap_or(15), 0);
+
+        thread::spawn(move || loop {
+            for sw_hostname in &config.switches {
+                if verbose {
+                    println!("Access to switch: {}", sw_hostname);
+                }
+                let sw = ProSafeSwitch::new(&sw_hostname, &config.if_name);
+                match sw.port_stat() {
+                    Ok(stats) => {
+                        for s in stats.stats {
+                            RECEIVE_BYTES
+                                .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
+                                .set(s.recv_bytes as f64);
+                            TRANSMIT_BYTES
+                                .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
+                                .set(s.send_bytes as f64);
+                            ERROR_PACKETS
+                                .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
+                                .set(s.error_pkts as f64);
+                        }
+
+                        UP.with_label_values(&[&sw_hostname]).set(1.0);
+                    }
+                    Err(x) => {
+                        UP.with_label_values(&[&sw_hostname]).set(0.0);
+
+                        if verbose {
+                            println!("Fail to access: {}", x);
+                        }
+                    }
+                }
+            }
+            thread::sleep(interval);
+        });
+
         if verbose {
             println!("Server started: {}", addr);
         }
 
         Server::http(addr)?.handle(move |req: Request, mut res: Response| {
             if req.uri == RequestUri::AbsolutePath("/metrics".to_string()) {
-                for sw_hostname in &config.switches {
-                    if verbose {
-                        println!("Access to switch: {}", sw_hostname);
-                    }
-                    let sw = ProSafeSwitch::new(&sw_hostname, &config.if_name);
-                    match sw.port_stat() {
-                        Ok(stats) => {
-                            for s in stats.stats {
-                                RECEIVE_BYTES
-                                    .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
-                                    .set(s.recv_bytes as f64);
-                                TRANSMIT_BYTES
-                                    .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
-                                    .set(s.send_bytes as f64);
-                                ERROR_PACKETS
-                                    .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
-                                    .set(s.error_pkts as f64);
-                            }
-
-                            UP.with_label_values(&[&sw_hostname]).set(1.0);
-                        }
-                        Err(x) => {
-                            UP.with_label_values(&[&sw_hostname]).set(0.0);
-
-                            if verbose {
-                                println!("Fail to access: {}", x);
-                            }
-                        }
-                    }
-                }
-
-                let git_revision = GIT_REVISION.unwrap_or("");
-                let rust_version = RUST_VERSION.unwrap_or("");
-                BUILD_INFO
-                    .with_label_values(&[&VERSION, &git_revision, &rust_version])
-                    .set(1.0);
-
                 let metric_familys = prometheus::gather();
                 let mut buffer = vec![];
                 encoder.encode(&metric_familys, &mut buffer).unwrap();

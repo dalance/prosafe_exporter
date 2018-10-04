@@ -53,7 +53,8 @@ prosafe_exporter --path.config [config_file]
 The format of `config_file` is below.
 
 ```
-listen_port = 9493                        # listen_port of expoter ( 9493 is the default port of prosafe_exporter )
-if_name     = "eno1"                      # network interface name to access switches ( ex. eno1, eth0,,, )
-switches    = ["switch1", "192.168.0.10"] # hostname or address of switches
+scrape_interval = 15                          # interval of scraping by second ( default: 15s )
+listen_port     = 9493                        # listen_port of expoter ( 9493 is the default port of prosafe_exporter )
+if_name         = "eno1"                      # network interface name to access switches ( ex. eno1, eth0,,, )
+switches        = ["switch1", "192.168.0.10"] # hostname or address of switches
 ```
