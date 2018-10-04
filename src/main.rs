@@ -3,7 +3,7 @@ extern crate combine;
 #[macro_use]
 extern crate failure;
 extern crate hyper;
-extern crate interfaces;
+extern crate interfaces2 as interfaces;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]

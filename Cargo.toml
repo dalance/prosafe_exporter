@@ -17,7 +17,7 @@ combine      = "3.5.2"
 failure      = "0.1.2"
 lazy_static  = "0.2.11"
 hyper        = { version = "0.9", default-features = false }
-interfaces   = "0.0.4"
+interfaces2  = "0.0.5"
 prometheus   = "0.4.2"
 rand         = "0.5.5"
 serde        = "1.0.79"
