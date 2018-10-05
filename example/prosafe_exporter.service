@@ -3,7 +3,7 @@ Description=Prometheus ProSAFE Exporter
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/prosafe_exporter --path.config /etc/prometheus/prosafe.toml
+ExecStart=/usr/local/bin/prosafe_exporter
 User=nobody
 
 [Install]

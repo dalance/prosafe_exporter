@@ -1,54 +1,45 @@
 use failure::Error;
-use hyper::header::ContentType;
-use hyper::mime::{Mime, SubLevel, TopLevel};
-use hyper::server::{Request, Response, Server};
-use hyper::uri::RequestUri;
-use prometheus;
-use prometheus::{Encoder, GaugeVec, TextEncoder};
+use hyper::rt::{self, Future};
+use hyper::service::service_fn_ok;
+use hyper::{Body, Response, Server, Uri};
+use prometheus::{Encoder, Gauge, GaugeVec, Opts, Registry, TextEncoder};
 use prosafe_switch::ProSafeSwitch;
-use std::thread;
-use std::time::Duration;
+use url::form_urlencoded;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Metrics
 // ---------------------------------------------------------------------------------------------------------------------
 
 lazy_static! {
-    static ref UP: GaugeVec =
-        register_gauge_vec!("prosafe_up", "The last query is successful.", &["instance"]).unwrap();
-    static ref RECEIVE_BYTES: GaugeVec = register_gauge_vec!(
-        "prosafe_receive_bytes_total",
-        "Incoming transfer in bytes.",
-        &["switch", "port"]
-    ).unwrap();
-    static ref TRANSMIT_BYTES: GaugeVec = register_gauge_vec!(
+    static ref UP_OPT: Opts = Opts::new("prosafe_up", "The last query is successful.");
+    static ref RECEIVE_BYTES_OPT: Opts =
+        Opts::new("prosafe_receive_bytes_total", "Incoming transfer in bytes.");
+    static ref TRANSMIT_BYTES_OPT: Opts = Opts::new(
         "prosafe_transmit_bytes_total",
-        "Outgoing transfer in bytes.",
-        &["switch", "port"]
-    ).unwrap();
-    static ref ERROR_PACKETS: GaugeVec = register_gauge_vec!(
-        "prosafe_error_packets_total",
-        "Transfer error in packets.",
-        &["switch", "port"]
-    ).unwrap();
-    static ref BUILD_INFO: GaugeVec = register_gauge_vec!(
+        "Outgoing transfer in bytes."
+    );
+    static ref ERROR_PACKETS_OPT: Opts =
+        Opts::new("prosafe_error_packets_total", "Transfer error in packets.");
+    static ref BUILD_INFO_OPT: Opts = Opts::new(
         "prosafe_build_info",
-        "A metric with a constant '1' value labeled by version, revision and rustversion",
-        &["version", "revision", "rustversion"]
-    ).unwrap();
+        "A metric with a constant '1' value labeled by version, revision and rustversion."
+    );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Landing Page HTML
 // ---------------------------------------------------------------------------------------------------------------------
 
-static LANDING_PAGE: &'static str = "<html>
+static LANDING_PAGE: &'static str = r#"<html>
 <head><title>ProSAFE Exporter</title></head>
 <body>
 <h1>ProSAFE Exporter</h1>
-<p><a href=\"/metrics\">Metrics</a></p>
+<form action="/probe">
+<label>Target:</label> <input type="text" name="target" placeholder="1.2.3.4:eth0"><br>
+<input type="submit" value="Submit">
+</form>
 </body>
-";
+"#;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Build info
@@ -59,60 +50,100 @@ static GIT_REVISION: Option<&'static str> = option_env!("GIT_REVISION");
 static RUST_VERSION: Option<&'static str> = option_env!("RUST_VERSION");
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Config
-// ---------------------------------------------------------------------------------------------------------------------
-
-#[derive(Debug, Deserialize)]
-pub struct Config {
-    pub scrape_interval: Option<u64>,
-    pub listen_port: Option<u32>,
-    pub if_name: String,
-    pub switches: Vec<String>,
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Exporter
 // ---------------------------------------------------------------------------------------------------------------------
 
 pub struct Exporter;
 
 impl Exporter {
-    pub fn start(config: Config, verbose: bool) -> Result<(), Error> {
-        let encoder = TextEncoder::new();
-        let addr = format!("0.0.0.0:{}", config.listen_port.unwrap_or(9493));
+    pub fn start(listen_address: &str, verbose: bool) -> Result<(), Error> {
+        let addr = format!("0.0.0.0{}", listen_address).parse()?;
+
+        if verbose {
+            println!("Server started: {:?}", addr);
+        }
+
+        let service = move || {
+            service_fn_ok(move |req| {
+                let uri = req.uri();
+                if uri.path() == "/probe" {
+                    Exporter::probe(uri, verbose)
+                } else {
+                    Response::new(Body::from(LANDING_PAGE))
+                }
+            })
+        };
+
+        let server = Server::bind(&addr)
+            .serve(service)
+            .map_err(|e| eprintln!("server error: {}", e));
+
+        rt::run(server);
+
+        Ok(())
+    }
+
+    fn probe(uri: &Uri, verbose: bool) -> Response<Body> {
+        let registry = Registry::new();
+
+        let build_info = GaugeVec::new(
+            BUILD_INFO_OPT.clone(),
+            &["version", "revision", "rustversion"],
+        ).unwrap();
+
+        let up = Gauge::with_opts(UP_OPT.clone()).unwrap();
+        let receive_bytes = GaugeVec::new(RECEIVE_BYTES_OPT.clone(), &["port"]).unwrap();
+        let transmit_bytes = GaugeVec::new(TRANSMIT_BYTES_OPT.clone(), &["port"]).unwrap();
+        let error_packets = GaugeVec::new(ERROR_PACKETS_OPT.clone(), &["port"]).unwrap();
+
+        let _ = registry.register(Box::new(build_info.clone()));
+        let _ = registry.register(Box::new(up.clone()));
+        let _ = registry.register(Box::new(receive_bytes.clone()));
+        let _ = registry.register(Box::new(transmit_bytes.clone()));
+        let _ = registry.register(Box::new(error_packets.clone()));
 
         let git_revision = GIT_REVISION.unwrap_or("");
         let rust_version = RUST_VERSION.unwrap_or("");
-        BUILD_INFO
+        build_info
             .with_label_values(&[&VERSION, &git_revision, &rust_version])
             .set(1.0);
 
-        let interval = Duration::new(config.scrape_interval.unwrap_or(15), 0);
-
-        thread::spawn(move || loop {
-            for sw_hostname in &config.switches {
-                if verbose {
-                    println!("Access to switch: {}", sw_hostname);
+        if let Some(query) = uri.query() {
+            let mut target = None;
+            let query = form_urlencoded::parse(query.as_bytes());
+            for (k, v) in query {
+                if k == "target" && v.contains(":") {
+                    target = Some(v);
                 }
-                let sw = ProSafeSwitch::new(&sw_hostname, &config.if_name);
+            }
+            if let Some(target) = target {
+                let target: Vec<&str> = target.split(":").collect();
+
+                let host = &target[0];
+                let if_name = &target[1];
+
+                if verbose {
+                    println!("Access to switch: {} though {}", host, if_name);
+                }
+                let sw = ProSafeSwitch::new(&host, &if_name);
                 match sw.port_stat() {
                     Ok(stats) => {
                         for s in stats.stats {
-                            RECEIVE_BYTES
-                                .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
+                            receive_bytes
+                                .with_label_values(&[&format!("{}", s.port_no)])
                                 .set(s.recv_bytes as f64);
-                            TRANSMIT_BYTES
-                                .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
+                            transmit_bytes
+                                .with_label_values(&[&format!("{}", s.port_no)])
                                 .set(s.send_bytes as f64);
-                            ERROR_PACKETS
-                                .with_label_values(&[&sw_hostname, &format!("{}", s.port_no)])
+                            error_packets
+                                .with_label_values(&[&format!("{}", s.port_no)])
                                 .set(s.error_pkts as f64);
                         }
 
-                        UP.with_label_values(&[&sw_hostname]).set(1.0);
+                        up.set(1.0);
                     }
                     Err(x) => {
-                        UP.with_label_values(&[&sw_hostname]).set(0.0);
+                        up.set(0.0);
 
                         if verbose {
                             println!("Fail to access: {}", x);
@@ -120,28 +151,12 @@ impl Exporter {
                     }
                 }
             }
-            thread::sleep(interval);
-        });
-
-        if verbose {
-            println!("Server started: {}", addr);
         }
 
-        Server::http(addr)?.handle(move |req: Request, mut res: Response| {
-            if req.uri == RequestUri::AbsolutePath("/metrics".to_string()) {
-                let metric_familys = prometheus::gather();
-                let mut buffer = vec![];
-                encoder.encode(&metric_familys, &mut buffer).unwrap();
-                res.headers_mut()
-                    .set(ContentType(encoder.format_type().parse::<Mime>().unwrap()));
-                res.send(&buffer).unwrap();
-            } else {
-                res.headers_mut()
-                    .set(ContentType(Mime(TopLevel::Text, SubLevel::Html, vec![])));
-                res.send(LANDING_PAGE.as_bytes()).unwrap();
-            }
-        })?;
-
-        Ok(())
+        let metric_familys = registry.gather();
+        let mut buffer = vec![];
+        let encoder = TextEncoder::new();
+        encoder.encode(&metric_familys, &mut buffer).unwrap();
+        Response::new(Body::from(buffer))
     }
 }

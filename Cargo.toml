@@ -16,7 +16,7 @@ bincode      = "1.0.1"
 combine      = "3.5.2"
 failure      = "0.1.2"
 lazy_static  = "0.2.11"
-hyper        = { version = "0.9", default-features = false }
+hyper        = "0.12.11"
 interfaces2  = "0.0.5"
 prometheus   = "0.4.2"
 rand         = "0.5.5"
@@ -24,6 +24,7 @@ serde        = "1.0.79"
 serde_derive = "1.0.79"
 structopt    = "0.2.10"
 toml         = "0.4.8"
+url          = "1.7.1"
 
 [package.metadata.release]
 dev-version-ext            = "pre"

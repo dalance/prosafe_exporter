@@ -8,10 +8,10 @@
 
 | metric                       | description                        | labels                         |
 | ---------------------------- | ---------------------------------- | ------------------------------ |
-| prosafe_up                   | The last query is successful       | switch                         |
-| prosafe_receive_bytes_total  | Incoming transfer in bytes         | switch, port                   |
-| prosafe_transmit_bytes_total | Outgoing transfer in bytes         | switch, port                   |
-| prosafe_error_packets_total  | Transfer error in packets          | switch, port                   |
+| prosafe_up                   | The last query is successful       |                                |
+| prosafe_receive_bytes_total  | Incoming transfer in bytes         | port                           |
+| prosafe_transmit_bytes_total | Outgoing transfer in bytes         | port                           |
+| prosafe_error_packets_total  | Transfer error in packets          | port                           |
 | prosafe_build_info           | prosafe_exporter Build information | version, revision, rustversion |
 
 ## Tested Switches
@@ -20,14 +20,6 @@
 - GS108Ev3
 - GS105Ev2
 
-## Query Example
-
-Outgoing data rate of `switch1:port1` is below.
-
-```
-rate(prosafe_transmit_bytes_total{switch="switch1", port="1"}[1m])
-```
-
 ## Install
 Download from [release page](https://github.com/dalance/prosafe_exporter/releases/latest), and extract to any directory ( e.g. `/usr/local/bin` ).
 See the example files in `example` directory as below.
@@ -35,7 +27,6 @@ See the example files in `example` directory as below.
 | File                             | Description                  |
 | -------------------------------- | ---------------------------- |
 | example/prosafe_exporter.service | systemd unit file            |
-| example/config.toml              | prosafe_exporter config file |
 
 
 If the release build doesn't fit your environment, you can build and install from source code.
@@ -47,14 +38,39 @@ cargo install prosafe_exporter
 ## Usage
 
 ```
-prosafe_exporter --path.config [config_file]
+prosafe_exporter --web.listen-address=":9493"
 ```
 
-The format of `config_file` is below.
+The default listen port is 9493.
+It can be changed by `--web.listen-address` option.
+
+## Prometheus Server Configuration
+
+The target switches of prosafe_exporter can be configured by the pair of hostname and network interface name ( e.g. `switch1:eth0` ).
+The network interface must be belonged to the same subnet as the switch.
+
+The Prometheus server configuration is like [SNMP exporter](https://github.com/prometheus/snmp_exporter).
+The example of a configuration is below:
+
+```yaml
+- job_name: 'prosafe'
+  static_configs:
+      - targets: ['switch1:eth0', '192.128.0.100:enp1s0'] # target switches by hostname:if_name.
+  metrics_path: /probe
+  relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: 127.0.0.1:9493 # The prosafe_exporter's real hostname:port.
+```
+
+## Query Example
+
+Outgoing data rate of `port1` on `switch1:eth0` is below.
 
 ```
-scrape_interval = 15                          # interval of scraping by second ( default: 15s )
-listen_port     = 9493                        # listen_port of expoter ( 9493 is the default port of prosafe_exporter )
-if_name         = "eno1"                      # network interface name to access switches ( ex. eno1, eth0,,, )
-switches        = ["switch1", "192.168.0.10"] # hostname or address of switches
+rate(prosafe_transmit_bytes_total{instance="switch1:eth0", port="1"}[1m])
 ```
+
