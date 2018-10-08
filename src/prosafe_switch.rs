@@ -57,6 +57,45 @@ impl QueryRequest {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// QueryResponse
+// ---------------------------------------------------------------------------------------------------------------------
+
+struct QueryResponse;
+
+impl QueryResponse {
+    fn decode(dat: &[u8]) -> Result<Vec<Vec<u8>>, Error> {
+        let (_, rest) = bytes(&[0x01, 0x02])
+            .and(be_u16())
+            .and(be_u16())
+            .and(skip_count(26, any()))
+            .parse(dat)
+            .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+        let mut ret = Vec::new();
+        let mut buf = rest;
+        while buf.len() != 0 {
+            let ((cmd, len), rest) = be_u16()
+                .and(be_u16())
+                .parse(buf)
+                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+            buf = rest;
+
+            if cmd == 0xffff {
+                break;
+            }
+
+            let (dat, rest) = count::<Vec<_>, _>(len as usize, any())
+                .parse(buf)
+                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+            buf = rest;
+
+            ret.push(dat);
+        }
+
+        Ok(ret)
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // PortStats
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -75,33 +114,12 @@ pub struct PortStat {
 
 impl PortStats {
     fn decode(dat: &[u8]) -> Result<Self, Error> {
-        let (_, rest) = bytes(&[0x01, 0x02])
-            .and(be_u16())
-            .and(be_u16())
-            .and(skip_count(26, any()))
-            .parse(dat)
-            .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+        let dat = QueryResponse::decode(dat)?;
         let mut stats = Vec::new();
-        let mut buf = rest;
-        while buf.len() != 0 {
-            let ((cmd, len), rest) = be_u16()
-                .and(be_u16())
-                .parse(buf)
-                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
-            buf = rest;
-
-            if cmd == 0xffff {
-                break;
-            }
-
-            let (dat, rest) = count::<Vec<_>, _>(len as usize, any())
-                .parse(buf)
-                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
-            buf = rest;
-
+        for d in dat {
             let ((port_no, metrics), _rest) = any()
                 .and(count::<Vec<_>, _>(6, be_u64()))
-                .parse(&dat as &[u8])
+                .parse(&d as &[u8])
                 .map_err(|x| format_err!("failed to parse: {:?}", x))?;
 
             let stat = PortStat {
@@ -144,33 +162,12 @@ pub enum Link {
 
 impl SpeedStats {
     fn decode(dat: &[u8]) -> Result<Self, Error> {
-        let (_, rest) = bytes(&[0x01, 0x02])
-            .and(be_u16())
-            .and(be_u16())
-            .and(skip_count(26, any()))
-            .parse(dat)
-            .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+        let dat = QueryResponse::decode(dat)?;
         let mut stats = Vec::new();
-        let mut buf = rest;
-        while buf.len() != 0 {
-            let ((cmd, len), rest) = be_u16()
-                .and(be_u16())
-                .parse(buf)
-                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
-            buf = rest;
-
-            if cmd == 0xffff {
-                break;
-            }
-
-            let (dat, rest) = count::<Vec<_>, _>(len as usize, any())
-                .parse(buf)
-                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
-            buf = rest;
-
+        for d in dat {
             let ((port_no, metrics), _rest) = any()
                 .and(count::<Vec<_>, _>(2, any()))
-                .parse(&dat as &[u8])
+                .parse(&d as &[u8])
                 .map_err(|x| format_err!("failed to parse: {:?}", x))?;
 
             let link = match metrics[0] {
@@ -188,7 +185,6 @@ impl SpeedStats {
                 port_no: port_no,
                 link: link,
             };
-
             stats.push(stat);
         }
 
