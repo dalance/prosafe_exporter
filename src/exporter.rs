@@ -3,7 +3,7 @@ use hyper::rt::{self, Future};
 use hyper::service::service_fn_ok;
 use hyper::{Body, Response, Server, Uri};
 use prometheus::{Encoder, Gauge, GaugeVec, Opts, Registry, TextEncoder};
-use prosafe_switch::ProSafeSwitch;
+use prosafe_switch::{Link, ProSafeSwitch};
 use url::form_urlencoded;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -20,6 +20,7 @@ lazy_static! {
     );
     static ref ERROR_PACKETS_OPT: Opts =
         Opts::new("prosafe_error_packets_total", "Transfer error in packets.");
+    static ref LINK_SPEED_OPT: Opts = Opts::new("prosafe_link_speed", "Link speed in Mbps.");
     static ref BUILD_INFO_OPT: Opts = Opts::new(
         "prosafe_build_info",
         "A metric with a constant '1' value labeled by version, revision and rustversion."
@@ -76,7 +77,7 @@ impl Exporter {
 
         let server = Server::bind(&addr)
             .serve(service)
-            .map_err(|e| eprintln!("server error: {}", e));
+            .map_err(|e| eprintln!("Server error: {}", e));
 
         rt::run(server);
 
@@ -95,12 +96,14 @@ impl Exporter {
         let receive_bytes = GaugeVec::new(RECEIVE_BYTES_OPT.clone(), &["port"]).unwrap();
         let transmit_bytes = GaugeVec::new(TRANSMIT_BYTES_OPT.clone(), &["port"]).unwrap();
         let error_packets = GaugeVec::new(ERROR_PACKETS_OPT.clone(), &["port"]).unwrap();
+        let link_speed = GaugeVec::new(LINK_SPEED_OPT.clone(), &["port"]).unwrap();
 
         let _ = registry.register(Box::new(build_info.clone()));
         let _ = registry.register(Box::new(up.clone()));
         let _ = registry.register(Box::new(receive_bytes.clone()));
         let _ = registry.register(Box::new(transmit_bytes.clone()));
         let _ = registry.register(Box::new(error_packets.clone()));
+        let _ = registry.register(Box::new(link_speed.clone()));
 
         let git_revision = GIT_REVISION.unwrap_or("");
         let rust_version = RUST_VERSION.unwrap_or("");
@@ -144,10 +147,27 @@ impl Exporter {
                     }
                     Err(x) => {
                         up.set(0.0);
-
-                        if verbose {
-                            println!("Fail to access: {}", x);
+                        eprintln!("Fail to access: {}", x);
+                    }
+                }
+                match sw.speed_stat() {
+                    Ok(stats) => {
+                        for s in stats.stats {
+                            let speed = match s.link {
+                                Link::None => 0,
+                                Link::Speed10Mbps => 10,
+                                Link::Speed100Mbps => 100,
+                                Link::Speed1Gbps => 1000,
+                                Link::Speed10Gbps => 10000,
+                                Link::Unknown => 0,
+                            };
+                            link_speed
+                                .with_label_values(&[&format!("{}", s.port_no)])
+                                .set(speed as f64);
                         }
+                    }
+                    Err(x) => {
+                        eprintln!("Fail to access: {}", x);
                     }
                 }
             }

@@ -15,6 +15,7 @@ use std::time::Duration;
 #[repr(u32)]
 enum Cmd {
     PortStat = 0x10000000,
+    SpeedStat = 0x0c000000,
     End = 0xffff0000,
 }
 
@@ -117,6 +118,85 @@ impl PortStats {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// SpeedStats
+// ---------------------------------------------------------------------------------------------------------------------
+
+#[derive(Debug)]
+pub struct SpeedStats {
+    pub stats: Vec<SpeedStat>,
+}
+
+#[derive(Debug)]
+pub struct SpeedStat {
+    pub port_no: u8,
+    pub link: Link,
+}
+
+#[derive(Debug)]
+pub enum Link {
+    None,
+    Speed10Mbps,
+    Speed100Mbps,
+    Speed1Gbps,
+    Speed10Gbps,
+    Unknown,
+}
+
+impl SpeedStats {
+    fn decode(dat: &[u8]) -> Result<Self, Error> {
+        let (_, rest) = bytes(&[0x01, 0x02])
+            .and(be_u16())
+            .and(be_u16())
+            .and(skip_count(26, any()))
+            .parse(dat)
+            .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+        let mut stats = Vec::new();
+        let mut buf = rest;
+        while buf.len() != 0 {
+            let ((cmd, len), rest) = be_u16()
+                .and(be_u16())
+                .parse(buf)
+                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+            buf = rest;
+
+            if cmd == 0xffff {
+                break;
+            }
+
+            let (dat, rest) = count::<Vec<_>, _>(len as usize, any())
+                .parse(buf)
+                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+            buf = rest;
+
+            let ((port_no, metrics), _rest) = any()
+                .and(count::<Vec<_>, _>(2, any()))
+                .parse(&dat as &[u8])
+                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+
+            let link = match metrics[0] {
+                0 => Link::None,
+                1 => Link::Speed10Mbps,
+                2 => Link::Speed10Mbps,
+                3 => Link::Speed100Mbps,
+                4 => Link::Speed100Mbps,
+                5 => Link::Speed1Gbps,
+                6 => Link::Speed10Gbps,
+                _ => Link::Unknown,
+            };
+
+            let stat = SpeedStat {
+                port_no: port_no,
+                link: link,
+            };
+
+            stats.push(stat);
+        }
+
+        Ok(SpeedStats { stats: stats })
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // ProSafeSwitch
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -175,5 +255,10 @@ impl ProSafeSwitch {
     pub fn port_stat(&self) -> Result<PortStats, Error> {
         let ret = self.request(Cmd::PortStat)?;
         Ok(PortStats::decode(&ret)?)
+    }
+
+    pub fn speed_stat(&self) -> Result<SpeedStats, Error> {
+        let ret = self.request(Cmd::SpeedStat)?;
+        Ok(SpeedStats::decode(&ret)?)
     }
 }

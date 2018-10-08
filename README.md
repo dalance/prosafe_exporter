@@ -12,6 +12,7 @@
 | prosafe_receive_bytes_total  | Incoming transfer in bytes         | port                           |
 | prosafe_transmit_bytes_total | Outgoing transfer in bytes         | port                           |
 | prosafe_error_packets_total  | Transfer error in packets          | port                           |
+| prosafe_link_speed           | Link speed in Mbps                 | port                           |
 | prosafe_build_info           | prosafe_exporter Build information | version, revision, rustversion |
 
 ## Tested Switches
