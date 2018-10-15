@@ -26,6 +26,9 @@ structopt    = "0.2.10"
 toml         = "0.4.8"
 url          = "1.7.1"
 
+[dev-dependencies]
+hex-literal = "*"
+
 [package.metadata.release]
 dev-version-ext            = "pre"
 pre-release-commit-message = "Prepare to v{{version}}"

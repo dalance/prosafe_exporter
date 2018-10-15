@@ -12,6 +12,9 @@ extern crate rand;
 extern crate serde_derive;
 #[macro_use]
 extern crate structopt;
+#[macro_use]
+#[cfg(test)]
+extern crate hex_literal;
 extern crate toml;
 extern crate url;
 

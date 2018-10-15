@@ -148,12 +148,12 @@ impl QueryResponse {
 // PortStats
 // ---------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct PortStats {
     pub stats: Vec<PortStat>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct PortStat {
     pub port_no: u8,
     pub recv_bytes: u64,
@@ -187,18 +187,18 @@ impl PortStats {
 // SpeedStats
 // ---------------------------------------------------------------------------------------------------------------------
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct SpeedStats {
     pub stats: Vec<SpeedStat>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct SpeedStat {
     pub port_no: u8,
     pub link: Link,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Link {
     None,
     Speed10Mbps,
@@ -295,13 +295,143 @@ impl ProSafeSwitch {
         Ok(Vec::from(&buf as &[u8]))
     }
 
+    #[cfg_attr(tarpaulin, skip)]
     pub fn port_stat(&self) -> Result<PortStats, Error> {
         let ret = self.request(Cmd::PortStat)?;
         Ok(PortStats::decode(&ret)?)
     }
 
+    #[cfg_attr(tarpaulin, skip)]
     pub fn speed_stat(&self) -> Result<SpeedStats, Error> {
         let ret = self.request(Cmd::SpeedStat)?;
         Ok(SpeedStats::decode(&ret)?)
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Test
+// ---------------------------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_query_encode() {
+        let req = QueryRequest::new(Cmd::PortStat, &HardwareAddr::zero(), &HardwareAddr::zero());
+        let dat = req.encode().unwrap();
+        let expected = hex!(
+            "010100000000000000000000000000000000000000000a0a4e5344500000000010000000ffff0000"
+        );
+        assert_eq!(dat[0..22], expected[0..22]);
+        assert_eq!(dat[24..], expected[24..]);
+    }
+
+    #[test]
+    fn test_port_stat_decode() {
+        let dat = hex!(
+            "01020000000000000cc47a3a39a808bd436a1596000000804e5344500000000010000031010000001c7e67379200000021fc85e1c40000000000000000000000000000000000000000000000000000000000000000100000310200000053ff78f7460000003581ed74c700000000000000000000000000000000000000000000000000000000000dce56100000310300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000031040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000003105000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000310600000177e8658769000001cae4c262b90000000000000000000000000000000000000000000000000000000000000000100000310700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000031080000000027f5c6f700000000450e67bd0000000000000000000000000000000000000000000000000000000000000000ffff0000"
+        );
+        let stat = PortStats::decode(&dat).unwrap();
+
+        let expected = PortStats {
+            stats: vec![
+                PortStat {
+                    port_no: 1,
+                    recv_bytes: 122379777938,
+                    send_bytes: 145970553284,
+                    error_pkts: 0,
+                },
+                PortStat {
+                    port_no: 2,
+                    recv_bytes: 360768403270,
+                    send_bytes: 229813089479,
+                    error_pkts: 904790,
+                },
+                PortStat {
+                    port_no: 3,
+                    recv_bytes: 0,
+                    send_bytes: 0,
+                    error_pkts: 0,
+                },
+                PortStat {
+                    port_no: 4,
+                    recv_bytes: 0,
+                    send_bytes: 0,
+                    error_pkts: 0,
+                },
+                PortStat {
+                    port_no: 5,
+                    recv_bytes: 0,
+                    send_bytes: 0,
+                    error_pkts: 0,
+                },
+                PortStat {
+                    port_no: 6,
+                    recv_bytes: 1614511703913,
+                    send_bytes: 1970932966073,
+                    error_pkts: 0,
+                },
+                PortStat {
+                    port_no: 7,
+                    recv_bytes: 0,
+                    send_bytes: 0,
+                    error_pkts: 0,
+                },
+                PortStat {
+                    port_no: 8,
+                    recv_bytes: 670418679,
+                    send_bytes: 1158571965,
+                    error_pkts: 0,
+                },
+            ],
+        };
+        assert_eq!(stat, expected);
+    }
+
+    #[test]
+    fn test_speed_stat_decode() {
+        let dat = hex!(
+            "01020000000000000cc47a3a39a828c68e6c2ebc000005ab4e534450000000000c0000030100010c0000030201010c0000030302010c0000030403010c0000030504010c0000030605010c0000030706010c000003080701ffff0000"
+        );
+        let stat = SpeedStats::decode(&dat).unwrap();
+
+        let expected = SpeedStats {
+            stats: vec![
+                SpeedStat {
+                    port_no: 1,
+                    link: Link::None,
+                },
+                SpeedStat {
+                    port_no: 2,
+                    link: Link::Speed10Mbps,
+                },
+                SpeedStat {
+                    port_no: 3,
+                    link: Link::Speed10Mbps,
+                },
+                SpeedStat {
+                    port_no: 4,
+                    link: Link::Speed100Mbps,
+                },
+                SpeedStat {
+                    port_no: 5,
+                    link: Link::Speed100Mbps,
+                },
+                SpeedStat {
+                    port_no: 6,
+                    link: Link::Speed1Gbps,
+                },
+                SpeedStat {
+                    port_no: 7,
+                    link: Link::Speed10Gbps,
+                },
+                SpeedStat {
+                    port_no: 8,
+                    link: Link::Unknown,
+                },
+            ],
+        };
+        assert_eq!(stat, expected);
     }
 }
