@@ -1,7 +1,8 @@
 use bincode::config;
-use combine::byte::{bytes, num::be_u16, num::be_u64};
+use combine::byte::bytes;
+use combine::byte::num::{be_u16, be_u64};
 use combine::combinator::*;
-use combine::Parser;
+use combine::{ParseError, Parser, Stream};
 use failure::Error;
 use interfaces::{HardwareAddr, Interface, Kind};
 use rand;
@@ -57,6 +58,58 @@ impl QueryRequest {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Parser
+// ---------------------------------------------------------------------------------------------------------------------
+
+struct ResponseParser;
+
+impl ResponseParser {
+    fn header<'a, I>() -> impl Parser<Input = I, Output = (u16, u16)>
+    where
+        I: Stream<Item = u8, Range = &'a [u8]>,
+        I::Error: ParseError<I::Item, I::Range, I::Position>,
+    {
+        bytes(&[0x01, 0x02])
+            .and(be_u16())
+            .and(be_u16())
+            .and(skip_count(26, any()))
+            .map(|(((_a, b), c), _d)| (b, c))
+    }
+
+    fn payload_header<'a, I>() -> impl Parser<Input = I, Output = (u16, u16)>
+    where
+        I: Stream<Item = u8, Range = &'a [u8]>,
+        I::Error: ParseError<I::Item, I::Range, I::Position>,
+    {
+        be_u16().and(be_u16())
+    }
+
+    fn payload_body<'a, I>(len: u16) -> impl Parser<Input = I, Output = Vec<u8>>
+    where
+        I: Stream<Item = u8, Range = &'a [u8]>,
+        I::Error: ParseError<I::Item, I::Range, I::Position>,
+    {
+        count::<Vec<_>, _>(len as usize, any())
+    }
+
+    fn port_stats<'a, I>() -> impl Parser<Input = I, Output = (u8, Vec<u64>)>
+    where
+        I: Stream<Item = u8, Range = &'a [u8]>,
+        I::Error: ParseError<I::Item, I::Range, I::Position>,
+    {
+        any().and(count::<Vec<_>, _>(6, be_u64()))
+    }
+
+    fn speed_stats<'a, I>() -> impl Parser<Input = I, Output = (u8, Vec<u8>)>
+    where
+        I: Stream<Item = u8, Range = &'a [u8]>,
+        I::Error: ParseError<I::Item, I::Range, I::Position>,
+    {
+        any().and(count::<Vec<_>, _>(2, any()))
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // QueryResponse
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -64,17 +117,18 @@ struct QueryResponse;
 
 impl QueryResponse {
     fn decode(dat: &[u8]) -> Result<Vec<Vec<u8>>, Error> {
-        let (_, rest) = bytes(&[0x01, 0x02])
-            .and(be_u16())
-            .and(be_u16())
-            .and(skip_count(26, any()))
+        let (_, rest) = ResponseParser::header()
             .parse(dat)
             .map_err(|x| format_err!("failed to parse: {:?}", x))?;
         let mut ret = Vec::new();
         let mut buf = rest;
         while buf.len() != 0 {
-            let ((cmd, len), rest) = be_u16()
-                .and(be_u16())
+            let ((cmd, len), rest) = ResponseParser::payload_header()
+                .parse(buf)
+                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
+            buf = rest;
+
+            let (dat, rest) = ResponseParser::payload_body(len)
                 .parse(buf)
                 .map_err(|x| format_err!("failed to parse: {:?}", x))?;
             buf = rest;
@@ -82,11 +136,6 @@ impl QueryResponse {
             if cmd == 0xffff {
                 break;
             }
-
-            let (dat, rest) = count::<Vec<_>, _>(len as usize, any())
-                .parse(buf)
-                .map_err(|x| format_err!("failed to parse: {:?}", x))?;
-            buf = rest;
 
             ret.push(dat);
         }
@@ -117,8 +166,7 @@ impl PortStats {
         let dat = QueryResponse::decode(dat)?;
         let mut stats = Vec::new();
         for d in dat {
-            let ((port_no, metrics), _rest) = any()
-                .and(count::<Vec<_>, _>(6, be_u64()))
+            let ((port_no, metrics), _rest) = ResponseParser::port_stats()
                 .parse(&d as &[u8])
                 .map_err(|x| format_err!("failed to parse: {:?}", x))?;
 
@@ -165,8 +213,7 @@ impl SpeedStats {
         let dat = QueryResponse::decode(dat)?;
         let mut stats = Vec::new();
         for d in dat {
-            let ((port_no, metrics), _rest) = any()
-                .and(count::<Vec<_>, _>(2, any()))
+            let ((port_no, metrics), _rest) = ResponseParser::speed_stats()
                 .parse(&d as &[u8])
                 .map_err(|x| format_err!("failed to parse: {:?}", x))?;
 
