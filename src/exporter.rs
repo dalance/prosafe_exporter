@@ -57,6 +57,7 @@ static RUST_VERSION: Option<&'static str> = option_env!("RUST_VERSION");
 pub struct Exporter;
 
 impl Exporter {
+    #[cfg_attr(tarpaulin, skip)]
     pub fn start(listen_address: &str, verbose: bool) -> Result<(), Error> {
         let addr = format!("0.0.0.0{}", listen_address).parse()?;
 
@@ -84,6 +85,7 @@ impl Exporter {
         Ok(())
     }
 
+    #[cfg_attr(tarpaulin, skip)]
     fn probe(uri: &Uri, verbose: bool) -> Response<Body> {
         let registry = Registry::new();
 

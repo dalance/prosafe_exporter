@@ -3,6 +3,7 @@
 
 [![Build Status](https://travis-ci.org/dalance/prosafe_exporter.svg?branch=master)](https://travis-ci.org/dalance/prosafe_exporter)
 [![Crates.io](https://img.shields.io/crates/v/prosafe_exporter.svg)](https://crates.io/crates/prosafe_exporter)
+[![codecov](https://codecov.io/gh/dalance/prosafe_exporter/branch/master/graph/badge.svg)](https://codecov.io/gh/dalance/prosafe_exporter)
 
 ## Exported Metrics
 

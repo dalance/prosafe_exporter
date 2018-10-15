@@ -15,17 +15,15 @@ script:
 - if [[ $TRAVIS_OS_NAME == "linux" ]]; then make release_lnx; fi
 - if [[ $TRAVIS_OS_NAME == "osx"   ]]; then make release_mac; fi
 
-#after_success: |
-#    if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-#        RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
-#        # Uncomment the following line for coveralls.io
-#        # cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
-#
-#        # Uncomment the following two lines create and upload a report for codecov.io
-#        rustup override set beta
-#        cargo tarpaulin --out Xml -- --test-threads=1
-#        bash <(curl -s https://codecov.io/bash)
-#    fi
+after_success: |
+    if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+        RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo +nightly install cargo-tarpaulin
+        # Uncomment the following line for coveralls.io
+        # cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+
+        cargo +nightly tarpaulin --out Xml
+        bash <(curl -s https://codecov.io/bash)
+    fi
 
 deploy:
   provider: releases

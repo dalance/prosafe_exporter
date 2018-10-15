@@ -250,6 +250,7 @@ pub struct ProSafeSwitch {
 }
 
 impl ProSafeSwitch {
+    #[cfg_attr(tarpaulin, skip)]
     pub fn new(hostname: &str, if_name: &str) -> Self {
         ProSafeSwitch {
             hostname: String::from(hostname),
@@ -258,6 +259,7 @@ impl ProSafeSwitch {
         }
     }
 
+    #[cfg_attr(tarpaulin, skip)]
     fn request(&self, cmd: Cmd) -> Result<Vec<u8>, Error> {
         let iface = Interface::get_by_name(&self.if_name)?.ok_or(format_err!(
             "failed to get network interface '{}'",
