@@ -28,7 +28,7 @@ toml         = "0.4.8"
 url          = "1.7.1"
 
 [dev-dependencies]
-hex-literal = "*"
+hex-literal = "0.1.1"
 
 [package.metadata.release]
 dev-version-ext            = "pre"
