@@ -1,27 +1,7 @@
-extern crate bincode;
-extern crate combine;
-#[macro_use]
-extern crate failure;
-extern crate hyper;
-extern crate interfaces2 as interfaces;
-#[macro_use]
-extern crate lazy_static;
-extern crate prometheus;
-extern crate rand;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate structopt;
-#[macro_use]
-#[cfg(test)]
-extern crate hex_literal;
-extern crate toml;
-extern crate url;
-
 mod exporter;
 mod prosafe_switch;
 
-use exporter::Exporter;
+use crate::exporter::Exporter;
 use failure::Error;
 use structopt::{clap, StructOpt};
 

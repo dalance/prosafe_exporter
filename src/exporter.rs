@@ -1,9 +1,10 @@
+use crate::prosafe_switch::{Link, ProSafeSwitch};
 use failure::Error;
 use hyper::rt::{self, Future};
 use hyper::service::service_fn_ok;
 use hyper::{Body, Response, Server, Uri};
+use lazy_static::lazy_static;
 use prometheus::{Encoder, Gauge, GaugeVec, Opts, Registry, TextEncoder};
-use prosafe_switch::{Link, ProSafeSwitch};
 use url::form_urlencoded;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -92,7 +93,8 @@ impl Exporter {
         let build_info = GaugeVec::new(
             BUILD_INFO_OPT.clone(),
             &["version", "revision", "rustversion"],
-        ).unwrap();
+        )
+        .unwrap();
 
         let up = Gauge::with_opts(UP_OPT.clone()).unwrap();
         let receive_bytes = GaugeVec::new(RECEIVE_BYTES_OPT.clone(), &["port"]).unwrap();

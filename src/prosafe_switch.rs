@@ -1,11 +1,13 @@
 use bincode::config;
+use failure::format_err;
 use combine::byte::bytes;
 use combine::byte::num::{be_u16, be_u64};
 use combine::combinator::*;
 use combine::{ParseError, Parser, Stream};
 use failure::Error;
-use interfaces::{HardwareAddr, Interface, Kind};
+use interfaces2::{HardwareAddr, Interface, Kind};
 use rand;
+use serde_derive::{Deserialize, Serialize};
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use std::time::Duration;
 
@@ -317,6 +319,7 @@ impl ProSafeSwitch {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use hex_literal::*;
 
     #[test]
     fn test_query_encode() {

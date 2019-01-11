@@ -7,6 +7,7 @@ license = "MIT"
 readme = "README.md"
 description = "Prometheus exporter for NETGEAR switches supported by ProSAFE Plus utility"
 categories = ["network-programming", "web-programming"]
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "dalance/prosafe_exporter" }
@@ -15,11 +16,11 @@ travis-ci = { repository = "dalance/prosafe_exporter" }
 bincode      = "1.0.1"
 combine      = "3.5.2"
 failure      = "0.1.2"
-lazy_static  = "0.2.11"
+lazy_static  = "1.2.0"
 hyper        = "0.12.11"
 interfaces2  = "0.0.5"
 prometheus   = "0.4.2"
-rand         = "0.5.5"
+rand         = "0.6.4"
 serde        = "1.0.79"
 serde_derive = "1.0.79"
 structopt    = "0.2.10"
