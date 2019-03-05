@@ -283,8 +283,7 @@ impl ProSafeSwitch {
         let req = req.encode()?;
 
         let ssocket = UdpSocket::bind(SocketAddr::new(iface_addr, 63321))?;
-        let rsocket = UdpSocket::bind("255.255.255.255:63321")?;
-        let _ = rsocket.set_read_timeout(Some(self.timeout));
+        let _ = ssocket.set_read_timeout(Some(self.timeout));
 
         let sw_addr = format!("{}:{}", self.hostname, 63322)
             .to_socket_addrs()
@@ -294,7 +293,7 @@ impl ProSafeSwitch {
         ssocket.send_to(&req, sw_addr)?;
 
         let mut buf = [0; 1024];
-        let (_len, _src_addr) = rsocket.recv_from(&mut buf)?;
+        let (_len, _src_addr) = ssocket.recv_from(&mut buf)?;
 
         Ok(Vec::from(&buf as &[u8]))
     }
