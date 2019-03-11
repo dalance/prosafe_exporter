@@ -1,14 +1,14 @@
 use bincode::config;
-use failure::format_err;
 use combine::byte::bytes;
 use combine::byte::num::{be_u16, be_u64};
 use combine::combinator::*;
 use combine::{ParseError, Parser, Stream};
+use failure::format_err;
 use failure::Error;
-use interfaces2::{HardwareAddr, Interface, Kind};
+use interfaces2::{HardwareAddr, Interface};
 use rand;
 use serde_derive::{Deserialize, Serialize};
-use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+use std::net::{ToSocketAddrs, UdpSocket};
 use std::time::Duration;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -265,17 +265,6 @@ impl ProSafeSwitch {
     fn request(&self, cmd: Cmd) -> Result<Vec<u8>, Error> {
         let iface = Interface::get_by_name(&self.if_name)?.ok_or(format_err!(
             "failed to get network interface '{}'",
-            self.if_name
-        ))?;
-        let mut iface_addr = None;
-        for address in &iface.addresses {
-            match address.kind {
-                Kind::Ipv4 => iface_addr = Some(address.addr.unwrap().ip()),
-                _ => (),
-            }
-        }
-        let iface_addr = iface_addr.ok_or(format_err!(
-            "failed to get IPv4 address of network interface '{}'",
             self.if_name
         ))?;
 
