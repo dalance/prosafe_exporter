@@ -11,9 +11,9 @@ use structopt::{clap, StructOpt};
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "prosafe_exporter")]
-#[structopt(
-    raw(long_version = "option_env!(\"LONG_VERSION\").unwrap_or(env!(\"CARGO_PKG_VERSION\"))")
-)]
+#[structopt(raw(
+    long_version = "option_env!(\"LONG_VERSION\").unwrap_or(env!(\"CARGO_PKG_VERSION\"))"
+))]
 #[structopt(raw(setting = "clap::AppSettings::ColoredHelp"))]
 #[structopt(raw(setting = "clap::AppSettings::DeriveDisplayOrder"))]
 pub struct Opt {
@@ -39,10 +39,7 @@ fn run() -> Result<(), Error> {
 
 #[cfg_attr(tarpaulin, skip)]
 fn main() {
-    match run() {
-        Err(x) => {
-            println!("{}", x);
-        }
-        _ => (),
+    if let Err(x) = run() {
+        println!("{}", x);
     }
 }

@@ -119,12 +119,12 @@ impl Exporter {
             let mut target = None;
             let query = form_urlencoded::parse(query.as_bytes());
             for (k, v) in query {
-                if k == "target" && v.contains(":") {
+                if k == "target" && v.contains(':') {
                     target = Some(v);
                 }
             }
             if let Some(target) = target {
-                let target: Vec<&str> = target.split(":").collect();
+                let target: Vec<&str> = target.split(':').collect();
 
                 let host = &target[0];
                 let if_name = &target[1];
@@ -167,7 +167,7 @@ impl Exporter {
                             };
                             link_speed
                                 .with_label_values(&[&format!("{}", s.port_no)])
-                                .set(speed as f64);
+                                .set(f64::from(speed));
                         }
                     }
                     Err(x) => {

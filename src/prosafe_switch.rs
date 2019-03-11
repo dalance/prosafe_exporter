@@ -17,9 +17,9 @@ use std::time::Duration;
 
 #[repr(u32)]
 enum Cmd {
-    PortStat = 0x10000000,
-    SpeedStat = 0x0c000000,
-    End = 0xffff0000,
+    PortStat = 0x1000_0000,
+    SpeedStat = 0x0c00_0000,
+    End = 0xffff_0000,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -35,7 +35,7 @@ struct QueryRequest {
 }
 
 impl QueryRequest {
-    fn new(cmd: Cmd, src_mac: &HardwareAddr, dst_mac: &HardwareAddr) -> Self {
+    fn new(cmd: Cmd, src_mac: HardwareAddr, dst_mac: HardwareAddr) -> Self {
         let mut src: [u8; 6] = Default::default();
         let mut dst: [u8; 6] = Default::default();
         src.copy_from_slice(src_mac.as_bytes());
@@ -124,7 +124,7 @@ impl QueryResponse {
             .map_err(|x| format_err!("failed to parse: {:?}", x))?;
         let mut ret = Vec::new();
         let mut buf = rest;
-        while buf.len() != 0 {
+        while !buf.is_empty() {
             let ((cmd, len), rest) = ResponseParser::payload_header()
                 .parse(buf)
                 .map_err(|x| format_err!("failed to parse: {:?}", x))?;
@@ -173,7 +173,7 @@ impl PortStats {
                 .map_err(|x| format_err!("failed to parse: {:?}", x))?;
 
             let stat = PortStat {
-                port_no: port_no,
+                port_no,
                 recv_bytes: metrics[0],
                 send_bytes: metrics[1],
                 error_pkts: metrics[5],
@@ -181,7 +181,7 @@ impl PortStats {
             stats.push(stat);
         }
 
-        Ok(PortStats { stats: stats })
+        Ok(PortStats { stats })
     }
 }
 
@@ -230,14 +230,11 @@ impl SpeedStats {
                 _ => Link::Unknown,
             };
 
-            let stat = SpeedStat {
-                port_no: port_no,
-                link: link,
-            };
+            let stat = SpeedStat { port_no, link };
             stats.push(stat);
         }
 
-        Ok(SpeedStats { stats: stats })
+        Ok(SpeedStats { stats })
     }
 }
 
@@ -263,12 +260,10 @@ impl ProSafeSwitch {
 
     #[cfg_attr(tarpaulin, skip)]
     fn request(&self, cmd: Cmd) -> Result<Vec<u8>, Error> {
-        let iface = Interface::get_by_name(&self.if_name)?.ok_or(format_err!(
-            "failed to get network interface '{}'",
-            self.if_name
-        ))?;
+        let iface = Interface::get_by_name(&self.if_name)?
+            .ok_or_else(|| format_err!("failed to get network interface '{}'", self.if_name))?;
 
-        let req = QueryRequest::new(cmd, &iface.hardware_addr()?, &HardwareAddr::zero());
+        let req = QueryRequest::new(cmd, iface.hardware_addr()?, HardwareAddr::zero());
         let req = req.encode()?;
 
         let socket = UdpSocket::bind("0.0.0.0:63321")?;
@@ -311,7 +306,7 @@ mod tests {
 
     #[test]
     fn test_query_encode() {
-        let req = QueryRequest::new(Cmd::PortStat, &HardwareAddr::zero(), &HardwareAddr::zero());
+        let req = QueryRequest::new(Cmd::PortStat, HardwareAddr::zero(), HardwareAddr::zero());
         let dat = req.encode().unwrap();
         let expected = hex!(
             "010100000000000000000000000000000000000000000a0a4e5344500000000010000000ffff0000"
