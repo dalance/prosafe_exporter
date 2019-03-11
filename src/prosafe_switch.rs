@@ -282,19 +282,18 @@ impl ProSafeSwitch {
         let req = QueryRequest::new(cmd, &iface.hardware_addr()?, &HardwareAddr::zero());
         let req = req.encode()?;
 
-        let ssocket = UdpSocket::bind(SocketAddr::new(iface_addr, 63321))?;
-        let rsocket = UdpSocket::bind("255.255.255.255:63321")?;
-        let _ = rsocket.set_read_timeout(Some(self.timeout));
+        let socket = UdpSocket::bind("0.0.0.0:63321")?;
+        let _ = socket.set_read_timeout(Some(self.timeout));
 
         let sw_addr = format!("{}:{}", self.hostname, 63322)
             .to_socket_addrs()
             .unwrap()
             .next()
             .unwrap();
-        ssocket.send_to(&req, sw_addr)?;
+        socket.send_to(&req, sw_addr)?;
 
         let mut buf = [0; 1024];
-        let (_len, _src_addr) = rsocket.recv_from(&mut buf)?;
+        let (_len, _src_addr) = socket.recv_from(&mut buf)?;
 
         Ok(Vec::from(&buf as &[u8]))
     }
