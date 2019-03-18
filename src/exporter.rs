@@ -5,6 +5,7 @@ use hyper::service::service_fn_ok;
 use hyper::{Body, Response, Server, Uri};
 use lazy_static::lazy_static;
 use prometheus::{Encoder, Gauge, GaugeVec, Opts, Registry, TextEncoder};
+use std::sync::{Arc, Mutex};
 use url::form_urlencoded;
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -66,11 +67,15 @@ impl Exporter {
             println!("Server started: {:?}", addr);
         }
 
+        let mutex = Arc::new(Mutex::new(()));
+
         let service = move || {
+            let mutex = Arc::clone(&mutex);
             service_fn_ok(move |req| {
+                let mutex = Arc::clone(&mutex);
                 let uri = req.uri();
                 if uri.path() == "/probe" {
-                    Exporter::probe(uri, verbose)
+                    Exporter::probe(uri, verbose, mutex)
                 } else {
                     Response::new(Body::from(LANDING_PAGE))
                 }
@@ -87,7 +92,7 @@ impl Exporter {
     }
 
     #[cfg_attr(tarpaulin, skip)]
-    fn probe(uri: &Uri, verbose: bool) -> Response<Body> {
+    fn probe(uri: &Uri, verbose: bool, mutex: Arc<Mutex<()>>) -> Response<Body> {
         let registry = Registry::new();
 
         let build_info = GaugeVec::new(
@@ -132,46 +137,51 @@ impl Exporter {
                 if verbose {
                     println!("Access to switch: {} though {}", host, if_name);
                 }
-                let sw = ProSafeSwitch::new(&host, &if_name);
-                match sw.port_stat() {
-                    Ok(stats) => {
-                        for s in stats.stats {
-                            receive_bytes
-                                .with_label_values(&[&format!("{}", s.port_no)])
-                                .set(s.recv_bytes as f64);
-                            transmit_bytes
-                                .with_label_values(&[&format!("{}", s.port_no)])
-                                .set(s.send_bytes as f64);
-                            error_packets
-                                .with_label_values(&[&format!("{}", s.port_no)])
-                                .set(s.error_pkts as f64);
-                        }
 
-                        up.set(1.0);
-                    }
-                    Err(x) => {
-                        up.set(0.0);
-                        eprintln!("Fail to access: {}", x);
-                    }
-                }
-                match sw.speed_stat() {
-                    Ok(stats) => {
-                        for s in stats.stats {
-                            let speed = match s.link {
-                                Link::None => 0,
-                                Link::Speed10Mbps => 10,
-                                Link::Speed100Mbps => 100,
-                                Link::Speed1Gbps => 1000,
-                                Link::Speed10Gbps => 10000,
-                                Link::Unknown => 0,
-                            };
-                            link_speed
-                                .with_label_values(&[&format!("{}", s.port_no)])
-                                .set(f64::from(speed));
+                {
+                    let _guard = mutex.lock();
+
+                    let sw = ProSafeSwitch::new(&host, &if_name);
+                    match sw.port_stat() {
+                        Ok(stats) => {
+                            for s in stats.stats {
+                                receive_bytes
+                                    .with_label_values(&[&format!("{}", s.port_no)])
+                                    .set(s.recv_bytes as f64);
+                                transmit_bytes
+                                    .with_label_values(&[&format!("{}", s.port_no)])
+                                    .set(s.send_bytes as f64);
+                                error_packets
+                                    .with_label_values(&[&format!("{}", s.port_no)])
+                                    .set(s.error_pkts as f64);
+                            }
+
+                            up.set(1.0);
+                        }
+                        Err(x) => {
+                            up.set(0.0);
+                            eprintln!("Fail to access: {}", x);
                         }
                     }
-                    Err(x) => {
-                        eprintln!("Fail to access: {}", x);
+                    match sw.speed_stat() {
+                        Ok(stats) => {
+                            for s in stats.stats {
+                                let speed = match s.link {
+                                    Link::None => 0,
+                                    Link::Speed10Mbps => 10,
+                                    Link::Speed100Mbps => 100,
+                                    Link::Speed1Gbps => 1000,
+                                    Link::Speed10Gbps => 10000,
+                                    Link::Unknown => 0,
+                                };
+                                link_speed
+                                    .with_label_values(&[&format!("{}", s.port_no)])
+                                    .set(f64::from(speed));
+                            }
+                        }
+                        Err(x) => {
+                            eprintln!("Fail to access: {}", x);
+                        }
                     }
                 }
             }
