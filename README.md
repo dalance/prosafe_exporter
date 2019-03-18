@@ -19,6 +19,7 @@
 ## Tested Switches
 
 - XS708E
+- GS116Ev2
 - GS108Ev3
 - GS105Ev2
 
@@ -45,6 +46,8 @@ prosafe_exporter --web.listen-address=":9493"
 
 The default listen port is 9493.
 It can be changed by `--web.listen-address` option.
+
+The ProSAFE switches need to have the Switch Management Mode set to "Web browser and Plus Utility" for the exporter to work correctly.
 
 ## Prometheus Server Configuration
 
@@ -75,4 +78,3 @@ Outgoing data rate of `port1` on `switch1:eth0` is below.
 ```
 rate(prosafe_transmit_bytes_total{instance="switch1:eth0", port="1"}[1m])
 ```
-
