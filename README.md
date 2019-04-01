@@ -22,6 +22,7 @@
 - GS116Ev2
 - GS108Ev3
 - GS105Ev2
+- JGS524PE
 
 ## Install
 Download from [release page](https://github.com/dalance/prosafe_exporter/releases/latest), and extract to any directory ( e.g. `/usr/local/bin` ).
