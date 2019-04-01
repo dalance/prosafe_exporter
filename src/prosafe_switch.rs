@@ -276,7 +276,7 @@ impl ProSafeSwitch {
             .unwrap();
         socket.send_to(&req, sw_addr)?;
 
-        let mut buf = [0; 1024];
+        let mut buf = [0; 1308];
         let (_len, _src_addr) = socket.recv_from(&mut buf)?;
 
         Ok(Vec::from(&buf as &[u8]))
