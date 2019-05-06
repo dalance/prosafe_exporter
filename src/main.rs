@@ -21,6 +21,10 @@ pub struct Opt {
     #[structopt(long = "web.listen-address", default_value = ":9493")]
     pub listen_address: String,
 
+    /// Static target probed through /metrics.
+    #[structopt(long = "target")]
+    pub target: Option<String>,
+
     /// Show verbose message
     #[structopt(short = "v", long = "verbose")]
     pub verbose: bool,
@@ -33,7 +37,7 @@ pub struct Opt {
 #[cfg_attr(tarpaulin, skip)]
 fn run() -> Result<(), Error> {
     let opt = Opt::from_args();
-    let _ = Exporter::start(&opt.listen_address, opt.verbose);
+    let _ = Exporter::start(&opt.listen_address, opt.target, opt.verbose);
     Ok(())
 }
 
