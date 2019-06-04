@@ -184,6 +184,19 @@ impl Exporter {
                 {
                     let _guard = mutex.lock();
 
+                    let if_name = if if_name == &"*" {
+                        let sw = ProSafeSwitch::new(&host, &if_name);
+                        match sw.find_iface() {
+                            Ok(iface) => iface,
+                            Err(_) => {
+                                eprintln!("Fail to find accessible network interface to {}", host);
+                                String::from(*if_name)
+                            }
+                        }
+                    } else {
+                        String::from(*if_name)
+                    };
+
                     let sw = ProSafeSwitch::new(&host, &if_name);
                     match sw.port_stat() {
                         Ok(stats) => {

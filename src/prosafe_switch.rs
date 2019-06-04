@@ -259,17 +259,22 @@ impl ProSafeSwitch {
     }
 
     #[cfg_attr(tarpaulin, skip)]
-    fn request(&self, cmd: Cmd) -> Result<Vec<u8>, Error> {
-        let iface = Interface::get_by_name(&self.if_name)?
-            .ok_or_else(|| format_err!("failed to get network interface '{}'", self.if_name))?;
+    fn request(
+        hostname: &str,
+        if_name: &str,
+        timeout: &Duration,
+        cmd: Cmd,
+    ) -> Result<Vec<u8>, Error> {
+        let iface = Interface::get_by_name(if_name)?
+            .ok_or_else(|| format_err!("failed to get network interface '{}'", if_name))?;
 
         let req = QueryRequest::new(cmd, iface.hardware_addr()?, HardwareAddr::zero());
         let req = req.encode()?;
 
         let socket = UdpSocket::bind("0.0.0.0:63321")?;
-        let _ = socket.set_read_timeout(Some(self.timeout));
+        let _ = socket.set_read_timeout(Some(*timeout));
 
-        let sw_addr = format!("{}:{}", self.hostname, 63322)
+        let sw_addr = format!("{}:{}", hostname, 63322)
             .to_socket_addrs()
             .unwrap()
             .next()
@@ -282,15 +287,33 @@ impl ProSafeSwitch {
         Ok(Vec::from(&buf as &[u8]))
     }
 
+    pub fn find_iface(&self) -> Result<String, Error> {
+        let ifaces =
+            Interface::get_all().map_err(|_| format_err!("failed to get network interfaces"))?;
+
+        for iface in ifaces {
+            let ret =
+                ProSafeSwitch::request(&self.hostname, &iface.name, &self.timeout, Cmd::PortStat)?;
+            let stat = PortStats::decode(&ret)?;
+            if stat.stats.len() > 0 {
+                return Ok(iface.name.clone());
+            }
+        }
+
+        Err(format_err!("failed to find accessible network interface"))
+    }
+
     #[cfg_attr(tarpaulin, skip)]
     pub fn port_stat(&self) -> Result<PortStats, Error> {
-        let ret = self.request(Cmd::PortStat)?;
+        let ret =
+            ProSafeSwitch::request(&self.hostname, &self.if_name, &self.timeout, Cmd::PortStat)?;
         Ok(PortStats::decode(&ret)?)
     }
 
     #[cfg_attr(tarpaulin, skip)]
     pub fn speed_stat(&self) -> Result<SpeedStats, Error> {
-        let ret = self.request(Cmd::SpeedStat)?;
+        let ret =
+            ProSafeSwitch::request(&self.hostname, &self.if_name, &self.timeout, Cmd::SpeedStat)?;
         Ok(SpeedStats::decode(&ret)?)
     }
 }

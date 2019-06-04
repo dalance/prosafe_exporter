@@ -61,7 +61,7 @@ The example of a configuration is below:
 ```yaml
 - job_name: 'prosafe'
   static_configs:
-      - targets: ['switch1:eth0', '192.128.0.100:enp1s0'] # target switches by hostname:if_name.
+      - targets: ['switch1:eth0', '192.128.0.100:enp1s0', 'switch2:*'] # target switches by hostname:if_name.
   metrics_path: /probe
   relabel_configs:
     - source_labels: [__address__]
@@ -71,6 +71,8 @@ The example of a configuration is below:
     - target_label: __address__
       replacement: 127.0.0.1:9493 # The prosafe_exporter's real hostname:port.
 ```
+
+`if_name` can be `*`. If `*` is used, prosafe_exporter will search an accessible network interface automatically.
 
 ## Query Example
 
