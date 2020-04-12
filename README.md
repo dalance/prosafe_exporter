@@ -19,9 +19,11 @@
 ## Tested Switches
 
 - XS708E
+- GS308E
 - GS116Ev2
 - GS108Ev3
 - GS105Ev2
+- GS108PEv3
 - JGS524PE
 
 ## Install
