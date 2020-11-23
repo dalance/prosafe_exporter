@@ -1,7 +1,7 @@
 # prosafe_exporter
 [Prometheus](https://prometheus.io) exporter for NETGEAR switches supported by ProSAFE Plus utility.
 
-[![Build Status](https://travis-ci.org/dalance/prosafe_exporter.svg?branch=master)](https://travis-ci.org/dalance/prosafe_exporter)
+[![Actions Status](https://github.com/dalance/prosafe_exporter/workflows/Regression/badge.svg)](https://github.com/dalance/prosafe_exporter/actions)
 [![Crates.io](https://img.shields.io/crates/v/prosafe_exporter.svg)](https://crates.io/crates/prosafe_exporter)
 [![codecov](https://codecov.io/gh/dalance/prosafe_exporter/branch/master/graph/badge.svg)](https://codecov.io/gh/dalance/prosafe_exporter)
 
