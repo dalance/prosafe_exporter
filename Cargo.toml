@@ -25,7 +25,7 @@ serde        = "1.0.79"
 serde_derive = "1.0.79"
 structopt    = "0.2.10"
 toml         = "0.5.7"
-url          = "1.7.1"
+url          = "2.2.0"
 
 [dev-dependencies]
 hex-literal = "0.1.1"
