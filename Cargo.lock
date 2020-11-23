@@ -186,7 +186,7 @@ dependencies = [
  "arrayvec",
  "cfg-if",
  "crossbeam-utils",
- "lazy_static 1.2.0",
+ "lazy_static 1.4.0",
  "memoffset",
  "scopeguard",
 ]
@@ -403,7 +403,7 @@ dependencies = [
  "bitflags",
  "cc",
  "handlebars",
- "lazy_static 1.2.0",
+ "lazy_static 1.4.0",
  "libc",
  "nix",
  "serde",
@@ -444,9 +444,9 @@ checksum = "76f033c7ad61445c5b347c7382dd1237847eb1bce590fe50365dcb33d546be73"
 
 [[package]]
 name = "lazy_static"
-version = "1.2.0"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a374c89b9db55895453a74c1e38861d9deec0b01b405a82516e9d5de4820dea1"
+checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "lazycell"
@@ -680,7 +680,7 @@ dependencies = [
  "hex-literal",
  "hyper",
  "interfaces2",
- "lazy_static 1.2.0",
+ "lazy_static 1.4.0",
  "prometheus",
  "rand",
  "serde",
@@ -1028,7 +1028,7 @@ version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c6b53e329000edc2b34dbe8545fd20e55a333362d0a321909685a19bd28c3f1b"
 dependencies = [
- "lazy_static 1.2.0",
+ "lazy_static 1.4.0",
 ]
 
 [[package]]
@@ -1099,7 +1099,7 @@ checksum = "afbcdb0f0d2a1e4c440af82d7bbf0bf91a8a8c0575bcd20c05d15be7e9d3a02f"
 dependencies = [
  "crossbeam-utils",
  "futures",
- "lazy_static 1.2.0",
+ "lazy_static 1.4.0",
  "log 0.4.6",
  "mio",
  "num_cpus",
