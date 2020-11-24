@@ -103,6 +103,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40ade3d27603c2cb345eb0912aec461a6dec7e06a4ae48589904e808335c7afa"
 dependencies = [
  "byteorder",
+ "either",
  "iovec",
 ]
 
@@ -342,6 +343,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "http-body"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6741c859c1b2463a423a1dbce98d418e6c3c3fc720fb0d45528657320920292d"
+dependencies = [
+ "bytes",
+ "futures",
+ "http",
+ "tokio-buf",
+]
+
+[[package]]
 name = "httparse"
 version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -349,22 +362,25 @@ checksum = "e8734b0cfd3bc3e101ec59100e101c2eecd19282202e87808b3037b442777a83"
 
 [[package]]
 name = "hyper"
-version = "0.12.20"
+version = "0.12.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80eeda66c9ef8e18f5122fff2c54604c053420b11dae951cfb74cf1dcba2e93f"
+checksum = "9dbe6ed1438e1f8ad955a4701e9a944938e9519f6888d12d8558b645e247d5f6"
 dependencies = [
  "bytes",
  "futures",
  "futures-cpupool",
  "h2",
  "http",
+ "http-body",
  "httparse",
  "iovec",
  "itoa",
  "log 0.4.6",
  "net2",
+ "rustc_version",
  "time",
  "tokio",
+ "tokio-buf",
  "tokio-executor",
  "tokio-io",
  "tokio-reactor",
@@ -1072,6 +1088,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-buf"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fb220f46c53859a4b7ec083e41dec9778ff0b1851c0942b211edb89e0ccdc46"
+dependencies = [
+ "bytes",
+ "either",
+ "futures",
+]
+
+[[package]]
 name = "tokio-current-thread"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1269,9 +1296,9 @@ checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 
 [[package]]
 name = "want"
-version = "0.0.6"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "797464475f30ddb8830cc529aaaae648d581f99e2036a928877dfde027ddf6b3"
+checksum = "b6395efa4784b027708f7451087e647ec73cc74f5d9bc2e418404248d679a230"
 dependencies = [
  "futures",
  "log 0.4.6",
