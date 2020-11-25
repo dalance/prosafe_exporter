@@ -14,7 +14,7 @@ travis-ci = { repository = "dalance/prosafe_exporter" }
 
 [dependencies]
 bincode      = "1"
-combine      = "3"
+combine      = "4"
 failure      = "0.1"
 lazy_static  = "1"
 hyper        = "0.12"
