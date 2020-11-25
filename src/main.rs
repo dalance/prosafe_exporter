@@ -11,11 +11,9 @@ use structopt::{clap, StructOpt};
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "prosafe_exporter")]
-#[structopt(raw(
-    long_version = "option_env!(\"LONG_VERSION\").unwrap_or(env!(\"CARGO_PKG_VERSION\"))"
-))]
-#[structopt(raw(setting = "clap::AppSettings::ColoredHelp"))]
-#[structopt(raw(setting = "clap::AppSettings::DeriveDisplayOrder"))]
+#[structopt(long_version = option_env!("LONG_VERSION").unwrap_or(env!("CARGO_PKG_VERSION")))]
+#[structopt(setting = clap::AppSettings::ColoredHelp)]
+#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
 pub struct Opt {
     /// Address on which to expose metrics and web interface.
     #[structopt(long = "web.listen-address", default_value = ":9493")]

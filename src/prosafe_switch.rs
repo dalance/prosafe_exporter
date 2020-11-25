@@ -1,7 +1,7 @@
-use bincode::config;
+use bincode::Options;
 use combine::byte::bytes;
 use combine::byte::num::{be_u16, be_u64};
-use combine::combinator::*;
+use combine::{any, count, skip_count};
 use combine::{ParseError, Parser, Stream};
 use failure::format_err;
 use failure::Error;
@@ -53,8 +53,7 @@ impl QueryRequest {
     }
 
     fn encode(&self) -> Result<Vec<u8>, Error> {
-        let mut config = config();
-        config.big_endian();
+        let config = bincode::options().with_big_endian().with_fixint_encoding();
         Ok(config.serialize(&self)?)
     }
 }
