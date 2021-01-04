@@ -31,8 +31,8 @@ url          = "2"
 hex-literal = "0.3"
 
 [package.metadata.release]
-dev-version-ext            = "pre"
-pre-release-commit-message = "Prepare to v{{version}}"
-pro-release-commit-message = "Start next development iteration v{{version}}"
-tag-message                = "Bump version to {{version}}"
-tag-prefix                 = "v"
+dev-version-ext             = "pre"
+pre-release-commit-message  = "Prepare to v{{version}}"
+post-release-commit-message = "Start next development iteration v{{version}}"
+tag-message                 = "Bump version to {{version}}"
+tag-prefix                  = ""
