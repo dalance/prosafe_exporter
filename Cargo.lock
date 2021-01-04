@@ -471,9 +471,9 @@ dependencies = [
 
 [[package]]
 name = "interfaces"
-version = "0.0.5"
+version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc5729e2c70a39425df4e66d410baecddf178ceb7fd3d7605815179ee8478db7"
+checksum = "4b3bf8c6c983fc18355b7bb2ff4d4454dc285b86ceca6dcd5798f878b4cdcb0f"
 dependencies = [
  "bitflags",
  "cc",
