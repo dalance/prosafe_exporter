@@ -301,12 +301,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gcc"
-version = "0.3.55"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
-
-[[package]]
 name = "getrandom"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -476,10 +470,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "interfaces2"
+name = "interfaces"
 version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a4b03e981408932d378ea8dbfa49d5d54b5561664402ba5ef0814e5f8986b1f"
+checksum = "fc5729e2c70a39425df4e66d410baecddf178ceb7fd3d7605815179ee8478db7"
 dependencies = [
  "bitflags",
  "cc",
@@ -651,16 +645,14 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.10.0"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7fd5681d13fda646462cfbd4e5f2051279a89a544d50eb98c365b507246839f"
+checksum = "b2ccba0cfe4fdf15982d1674c69b1fd80bad427d293849982668dfe454bd61f2"
 dependencies = [
  "bitflags",
- "bytes",
- "cfg-if 0.1.10",
- "gcc",
+ "cc",
+ "cfg-if 1.0.0",
  "libc",
- "void",
 ]
 
 [[package]]
@@ -806,7 +798,7 @@ dependencies = [
  "failure",
  "hex-literal",
  "hyper",
- "interfaces2",
+ "interfaces",
  "lazy_static 1.4.0",
  "prometheus",
  "rand",

@@ -5,7 +5,7 @@ use combine::{any, count, skip_count};
 use combine::{ParseError, Parser, Stream};
 use failure::format_err;
 use failure::Error;
-use interfaces2::{HardwareAddr, Interface};
+use interfaces::{HardwareAddr, Interface};
 use rand;
 use serde_derive::{Deserialize, Serialize};
 use std::net::{ToSocketAddrs, UdpSocket};
