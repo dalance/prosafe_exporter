@@ -15,4 +15,5 @@ WORKDIR /app
 
 COPY --from=cargo-build /build/target/x86_64-unknown-linux-musl/release/prosafe_exporter .
 
+EXPOSE 9493/tcp
 ENTRYPOINT ["/app/prosafe_exporter"]
