@@ -1,0 +1,21 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "20:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: combine
+    versions:
+    - ">= 4.4.a, < 4.5"
+  - dependency-name: combine
+    versions:
+    - ">= 4.a, < 5"
+  - dependency-name: hyper
+    versions:
+    - ">= 0.13.a, < 0.14"
+  - dependency-name: hyper
+    versions:
+    - ">= 0.14.a, < 0.15"
