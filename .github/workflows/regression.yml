@@ -18,6 +18,6 @@ jobs:
       with:
         rust-version: ${{ matrix.rust }}
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: Run tests
       run: cargo test
