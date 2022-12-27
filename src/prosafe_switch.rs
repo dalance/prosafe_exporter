@@ -7,7 +7,7 @@ use failure::format_err;
 use failure::Error;
 use interfaces::{HardwareAddr, Interface};
 use rand;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::net::{ToSocketAddrs, UdpSocket};
 use std::time::Duration;
 
