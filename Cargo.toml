@@ -27,7 +27,7 @@ toml         = "0.7"
 url          = "2"
 
 [dev-dependencies]
-hex-literal = "0.3"
+hex-literal = "0.4"
 
 [package.metadata.release]
 dev-version-ext             = "pre"
