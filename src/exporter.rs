@@ -59,7 +59,6 @@ static RUST_VERSION: Option<&'static str> = option_env!("RUST_VERSION");
 pub struct Exporter;
 
 impl Exporter {
-    #[cfg_attr(tarpaulin, skip)]
     pub fn start(listen_address: &str, target: Option<String>, verbose: bool) -> Result<(), Error> {
         let addr = format!("0.0.0.0{}", listen_address).parse()?;
 
@@ -110,7 +109,6 @@ impl Exporter {
         Ok(())
     }
 
-    #[cfg_attr(tarpaulin, skip)]
     fn probe(
         uri: &Uri,
         instance_label: bool,
@@ -259,6 +257,9 @@ impl Exporter {
         let mut buffer = vec![];
         let encoder = TextEncoder::new();
         encoder.encode(&metric_familys, &mut buffer).unwrap();
-        Response::new(Body::from(buffer))
+        Response::builder()
+            .header("Content-Type", "text/plain; version=0.0.4")
+            .body(Body::from(buffer))
+            .unwrap()
     }
 }

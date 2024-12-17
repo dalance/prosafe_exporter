@@ -32,14 +32,12 @@ pub struct Opt {
 // Main
 // -------------------------------------------------------------------------------------------------
 
-#[cfg_attr(tarpaulin, skip)]
 fn run() -> Result<(), Error> {
     let opt = Opt::from_args();
     let _ = Exporter::start(&opt.listen_address, opt.target, opt.verbose);
     Ok(())
 }
 
-#[cfg_attr(tarpaulin, skip)]
 fn main() {
     if let Err(x) = run() {
         println!("{}", x);

@@ -248,7 +248,6 @@ pub struct ProSafeSwitch {
 }
 
 impl ProSafeSwitch {
-    #[cfg_attr(tarpaulin, skip)]
     pub fn new(hostname: &str, if_name: &str) -> Self {
         ProSafeSwitch {
             hostname: String::from(hostname),
@@ -257,7 +256,6 @@ impl ProSafeSwitch {
         }
     }
 
-    #[cfg_attr(tarpaulin, skip)]
     fn request(
         hostname: &str,
         if_name: &str,
@@ -302,14 +300,12 @@ impl ProSafeSwitch {
         Err(format_err!("failed to find accessible network interface"))
     }
 
-    #[cfg_attr(tarpaulin, skip)]
     pub fn port_stat(&self) -> Result<PortStats, Error> {
         let ret =
             ProSafeSwitch::request(&self.hostname, &self.if_name, &self.timeout, Cmd::PortStat)?;
         Ok(PortStats::decode(&ret)?)
     }
 
-    #[cfg_attr(tarpaulin, skip)]
     pub fn speed_stat(&self) -> Result<SpeedStats, Error> {
         let ret =
             ProSafeSwitch::request(&self.hostname, &self.if_name, &self.timeout, Cmd::SpeedStat)?;
