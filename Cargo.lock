@@ -1031,7 +1031,7 @@ dependencies = [
 
 [[package]]
 name = "prosafe_exporter"
-version = "0.2.9-pre"
+version = "0.2.9"
 dependencies = [
  "bincode",
  "combine",
