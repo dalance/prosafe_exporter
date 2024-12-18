@@ -42,3 +42,37 @@ jobs:
         files: '*.zip'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build-and-push-docker:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Extract tag version
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Build and tag Docker image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/prosafe_exporter
+          VERSION_TAG=${{ env.version }}
+          
+          echo "Building Docker image with tags: ${VERSION_TAG} and latest"
+          docker build -t $IMAGE_NAME:$VERSION_TAG -t $IMAGE_NAME:latest .
+      - name: Push Docker image to GHCR
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/prosafe_exporter
+          VERSION_TAG=${{ env.version }}
+
+          echo "Pushing Docker image tags: ${VERSION_TAG} and latest"
+          docker push $IMAGE_NAME:$VERSION_TAG
+          docker push $IMAGE_NAME:latest
