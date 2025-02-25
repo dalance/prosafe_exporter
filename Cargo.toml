@@ -27,7 +27,7 @@ toml         = "0.8"
 url          = "2"
 
 [dev-dependencies]
-hex-literal = "0.4"
+hex-literal = "1.0"
 
 [package.metadata.release]
 pre-release-commit-message = "Prepare to v{{version}}"
