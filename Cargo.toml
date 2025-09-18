@@ -13,7 +13,7 @@ edition = "2018"
 travis-ci = { repository = "dalance/prosafe_exporter" }
 
 [dependencies]
-bincode      = "1"
+bincode      = "2"
 combine      = "3"
 failure      = "0.1"
 lazy_static  = "1"
